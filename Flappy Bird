@@ -1,0 +1,116 @@
+import tkinter as tk
+import math as m
+import numpy as np
+import random as rndm
+from turtle import Screen, Turtle
+
+
+#Make Flappy Bird Background
+#Add sound to scoring point
+#Adding Score Board
+#Adding end game window
+
+
+#Create Screen
+screen = Screen()
+screen.bgcolor("black")
+screen.title("Flappy Bird")
+screen.screensize(canvwidth=400, canvheight=400)
+canvas=screen.getcanvas()
+
+#Define objects
+class Bird():
+    def __init__(self,x,y,size):
+        self.shape = canvas.create_oval(x-size,y-size,x+size,y+size, fill="white")
+        self.x=x
+        self.y=y
+        self.dy=0
+        self.gravity=1.5
+        self.lift = -12
+
+    def update(self):
+        self.dy += self.gravity
+        canvas.move(self.shape, 0, self.dy)
+        self.y += self.dy
+        #Check the border
+        if self.y > 400:
+            self.y = 400
+            self.dy = 0
+            
+        if self.y < -400:
+            self.y = -400
+            self.dy = 0
+
+    def jump(self,event=None):
+        self.dy += self.lift
+
+class Pipe():
+    def __init__(self):
+        distance = rndm.randint(150, 250)
+        centery = rndm.randint(-200, 200)
+        self.top = 400 - distance/2 + centery
+        self.bottom = 400 - distance/2 - centery
+        self.x = 400
+        self.speed = 5
+        self.shape1 = canvas.create_rectangle(self.x, -400, self.x+40, self.top-400, fill="green")
+        self.shape2 = canvas.create_rectangle(self.x, 400-self.bottom, self.x+40, 400, fill="green")
+
+    def update(self):
+        self.x -= self.speed
+        canvas.move(self.shape1, -self.speed, 0)
+        canvas.move(self.shape2, -self.speed, 0)
+
+    def hits(self, other):
+        if ((other.y-20) < self.top-400) or ((other.y+20) > (400 - self.bottom)):
+            if ((other.x+20) > self.x) and ((other.x-20) < (self.x + 40)):
+                return True
+        else:
+            return False
+
+    def offscreen(self):
+        if self.x < -420:
+            return True
+        else:
+            return False
+
+class Game():
+    def __init__(self):
+        self.score = 0
+        self.state = "playing"
+        self.pen = Turtle()
+        
+    def show_status(self):
+        self.pen.speed(0)
+        self.pen.ht()
+        #self.pen.undo()
+        msg = "Score: %s" %(self.score) #Add multiple stuff in msg???
+        self.pen.penup()
+        self.pen.goto(-300, 310)
+        self.pen.write(msg, font=("Arial", 16, "normal"))
+        
+#Create Bird
+bird = Bird(100,0,20)
+#Create Pipes
+pipes = []
+
+#Annimation loop
+framecount = 0
+def annimation():
+    global framecount
+    if framecount % 40 == 0:
+        pipes.append(Pipe())
+    for pipe in pipes:
+        pipe.update()
+        if pipe.hits(bird):
+            print("GAME OVER")
+        if pipe.offscreen():
+            del pipe
+    bird.update()
+    framecount += 1
+    canvas.after(40,annimation)
+
+annimation()
+
+screen.onkey(bird.jump, "space")
+screen.listen()
+screen.mainloop()
